@@ -1,0 +1,16 @@
+# Food Fortune 配置文件
+# 将此文件复制为 config.yaml 并修改相应配置
+
+ai:
+  # AI 文案增强配置
+  provider: openai_compatible
+  api_key: ""  # 填入你的 API Key 以启用 AI 文案增强
+  base_url: https://api.deepseek.com/v1
+  model: deepseek-v4-pro
+  enabled: false # 当 api_key 为空时自动禁用
+
+fortune:
+  # 评分权重配置
+  # 星座口味匹配权重 + 八字五行匹配权重 = 1.0
+  constellation_weight: 0.5
+  bazi_weight: 0.5
