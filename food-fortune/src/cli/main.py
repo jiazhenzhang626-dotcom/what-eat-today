@@ -1,7 +1,7 @@
 """Food Fortune CLI —— 占卜美食引擎命令行入口"""
 
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -22,6 +22,7 @@ from src.ai.template_writer import TemplateWriter
 from src.ai.openai_writer import OpenAIWriter
 from src.knowledge.loader import load_recipes, load_constellation_flavors
 from src.orchestrator.scorer import FoodScorer
+from src.orchestrator.daily_recommender import DailyRecommender
 
 app = typer.Typer(
     name="food-fortune",
@@ -58,8 +59,17 @@ def fortune(
         min=1,
         max=10,
     ),
+    dynamic: bool = typer.Option(
+        False,
+        "--dynamic",
+        help="启用动态流日推荐模式（结合当日天干，每日结果不同）",
+    ),
 ) -> None:
-    """根据你的出生日期，推荐今日最适合的中国菜"""
+    """根据你的出生日期，推荐今日最适合的中国菜
+
+    默认使用静态模式（星座 + 八字）。使用 --dynamic 启用动态模式，
+    额外结合当日流日天干，同一用户每天获得不同推荐。
+    """
 
     # ---- 1. 加载配置 ----
     config = load_config()
@@ -104,21 +114,32 @@ def fortune(
             "[yellow]   在 config.yaml 中填入 api_key 即可启用 AI 个性化文案。[/yellow]"
         )
 
-    scorer = FoodScorer(
-        constellation_flavor_map=constellation_flavors,
-        bazi_analyzer=bazi_analyzer,
-        constellation_weight=constellation_weight,
-        bazi_weight=bazi_weight,
-    )
-
     # ---- 5. 执行评分 ----
-    results = scorer.score(recipe_list, birth_dt)
+    if dynamic:
+        recommender = DailyRecommender(
+            constellation_flavor_map=constellation_flavors,
+            bazi_analyzer=bazi_analyzer,
+            constellation_weight=constellation_weight,
+            bazi_weight=bazi_weight,
+        )
+        results = recommender.score(recipe_list, birth_dt, query_date=date.today())
+        mode_label = "动态 · 流日天干"
+    else:
+        scorer = FoodScorer(
+            constellation_flavor_map=constellation_flavors,
+            bazi_analyzer=bazi_analyzer,
+            constellation_weight=constellation_weight,
+            bazi_weight=bazi_weight,
+        )
+        results = scorer.score(recipe_list, birth_dt)
+        mode_label = "静态 · 星座+八字"
+
     top_results = results[:top_k]
 
     # ---- 6. 输出结果 ----
 
     # 标题
-    title = Text("Food Fortune - 占卜美食引擎", style="bold magenta")
+    title = Text(f"Food Fortune - 占卜美食引擎 [{mode_label}]", style="bold magenta")
     console.print(Panel(title, border_style="magenta"))
 
     # 用户信息
@@ -129,6 +150,16 @@ def fortune(
     if top_results:
         console.print(f"[Sign] 星座: {top_results[0].get('constellation', '未知')}")
         console.print(f"[BaZi] 日主: {top_results[0].get('day_master', '未知')}")
+        if dynamic:
+            daily_explanation = top_results[0].get('daily_explanation', '')
+            if daily_explanation:
+                console.print(f"[Daily] {daily_explanation}")
+            shifted = top_results[0].get('shifted_weights', {})
+            if shifted:
+                console.print(
+                    f"[Weight] 权重调整 → 星座: {shifted.get('constellation', 0.5)} "
+                    f"| 八字: {shifted.get('bazi', 0.5)}"
+                )
 
     console.print()
     console.print(f"[bold]>> 今日推荐 Top {len(top_results)}：[/bold]")
@@ -176,11 +207,19 @@ def fortune(
             f"{scores.get('bazi', 0):.3f}",
             dish.get("wuxing_tip", ""),
         )
-        score_table.add_row(
-            "综合得分",
-            f"[bold yellow]{scores.get('total', 0):.3f}[/bold yellow]",
-            f"权重 {constellation_weight}:{bazi_weight}",
-        )
+        if dynamic:
+            shifted = dish.get('shifted_weights', {})
+            score_table.add_row(
+                "综合得分",
+                f"[bold yellow]{scores.get('total', 0):.3f}[/bold yellow]",
+                f"动态权重 {shifted.get('constellation', 0.5)}:{shifted.get('bazi', 0.5)}",
+            )
+        else:
+            score_table.add_row(
+                "综合得分",
+                f"[bold yellow]{scores.get('total', 0):.3f}[/bold yellow]",
+                f"权重 {constellation_weight}:{bazi_weight}",
+            )
         console.print(score_table)
 
         # --- 做法步骤 ---

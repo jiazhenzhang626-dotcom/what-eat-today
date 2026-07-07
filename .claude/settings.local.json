@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(sleep 3 && cat \"/c/Users/月星辰/AppData/Local/Temp/claude/d--what-eat-today/b61ecaf7-ac1f-4728-a8b4-4374d291f18f/tasks/bk6ub1e5h.output\" 2>&1)",
-      "Read(//c/Users/月星辰/AppData/Local/Temp/claude/d--what-eat-today/b61ecaf7-ac1f-4728-a8b4-4374d291f18f/tasks/**)",
-      "Bash(curl -s http://127.0.0.1:8888/api/fortune -X POST -H \"Content-Type: application/json\" -d \"{\\\\\"birth_date\\\\\":\\\\\"1995-07-23\\\\\"}\")"
-    ]
-  }
-}

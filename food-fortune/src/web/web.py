@@ -9,7 +9,7 @@ Food Fortune Web 界面 -- FastAPI 后端应用
 """
 
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -30,6 +30,7 @@ from src.ai.template_writer import TemplateWriter
 from src.ai.openai_writer import OpenAIWriter
 from src.knowledge.loader import load_recipes, load_constellation_flavors
 from src.orchestrator.scorer import FoodScorer
+from src.orchestrator.daily_recommender import DailyRecommender
 
 # ---------------------------------------------------------------
 # 请求模型
@@ -40,6 +41,7 @@ class FortuneRequest(BaseModel):
     birth_time: Optional[str] = Field(None, description="出生时间，格式 HH:MM（可选）")
     gender: Optional[str] = Field(None, description="性别（可选）")
     top_k: int = Field(3, ge=1, le=7, description="推荐菜品数量（1~7）")
+    mode: str = Field("static", description="推荐模式：static（静态）或 dynamic（动态）")
 
 
 # ---------------------------------------------------------------
@@ -65,6 +67,10 @@ class RecipeResult(BaseModel):
     cookTime: int
     scores: ScoreDetail
     fortune_text: str
+    daily_tier: Optional[str] = None
+    daily_stem: Optional[str] = None
+    daily_explanation: Optional[str] = None
+    shifted_weights: Optional[Dict[str, float]] = None
 
 
 class UserInfo(BaseModel):
@@ -72,6 +78,10 @@ class UserInfo(BaseModel):
     constellation: str
     day_master: str
     wuxing_tip: str
+    daily_stem: Optional[str] = None
+    daily_tier: Optional[str] = None
+    daily_explanation: Optional[str] = None
+    shifted_weights: Optional[Dict[str, float]] = None
 
 
 class FortuneResponse(BaseModel):
@@ -113,16 +123,33 @@ _scorer = FoodScorer(
     bazi_weight=_config.get("fortune", {}).get("bazi_weight", 0.5),
 )
 
+# 动态推荐器
+_daily_recommender = DailyRecommender(
+    constellation_flavor_map=_constellation_flavors,
+    bazi_analyzer=_bazi_analyzer,
+    constellation_weight=_config.get("fortune", {}).get("constellation_weight", 0.5),
+    bazi_weight=_config.get("fortune", {}).get("bazi_weight", 0.5),
+)
+
 
 # ---------------------------------------------------------------
 # 路由
 # ---------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    """返回前端页面"""
+    """返回模式选择首页"""
     template_path = _PROJECT_ROOT / "src" / "web" / "templates" / "index.html"
     if not template_path.exists():
         raise HTTPException(status_code=404, detail="index.html not found")
+    return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
+
+
+@app.get("/fortune", response_class=HTMLResponse)
+async def fortune_page():
+    """返回占卜表单页"""
+    template_path = _PROJECT_ROOT / "src" / "web" / "templates" / "fortune.html"
+    if not template_path.exists():
+        raise HTTPException(status_code=404, detail="fortune.html not found")
     return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
 
 
@@ -131,7 +158,7 @@ async def fortune(req: FortuneRequest):
     """执行占卜，返回推荐菜品及文案
 
     Args:
-        req: 包含 birth_date、birth_time、gender、top_k 的请求体
+        req: 包含 birth_date、birth_time、gender、top_k、mode 的请求体
 
     Returns:
         FortuneResponse: 用户分析信息 + 菜品推荐列表
@@ -156,10 +183,14 @@ async def fortune(req: FortuneRequest):
     # 2. 获取用户星座信息
     birth_date_obj = birth_dt.date()
     constellation = get_constellation(birth_date_obj.month, birth_date_obj.day)
+    is_dynamic = req.mode == "dynamic"
 
-    # 3. 执行评分
-    top_k = max(1, min(7, req.top_k))  # 安全截断，防止异常值
-    scored = _scorer.score(_recipe_list, birth_dt)
+    # 3. 执行评分（根据 mode 分发）
+    top_k = max(1, min(7, req.top_k))
+    if is_dynamic:
+        scored = _daily_recommender.score(_recipe_list, birth_dt, query_date=date.today())
+    else:
+        scored = _scorer.score(_recipe_list, birth_dt)
     top_results = scored[: top_k]
 
     # 4. 构建响应
@@ -198,12 +229,20 @@ async def fortune(req: FortuneRequest):
                 total=round(scores.get("total", 0) * 100, 1),
             ),
             fortune_text=fortune_text,
+            daily_tier=dish.get("daily_tier") if is_dynamic else None,
+            daily_stem=dish.get("daily_stem") if is_dynamic else None,
+            daily_explanation=dish.get("daily_explanation") if is_dynamic else None,
+            shifted_weights=dish.get("shifted_weights") if is_dynamic else None,
         ))
 
     user_info = UserInfo(
         constellation=constellation,
         day_master=top_results[0].get("day_master", "未知") if top_results else "未知",
         wuxing_tip=top_results[0].get("wuxing_tip", "") if top_results else "",
+        daily_stem=top_results[0].get("daily_stem") if is_dynamic and top_results else None,
+        daily_tier=top_results[0].get("daily_tier") if is_dynamic and top_results else None,
+        daily_explanation=top_results[0].get("daily_explanation") if is_dynamic and top_results else None,
+        shifted_weights=top_results[0].get("shifted_weights") if is_dynamic and top_results else None,
     )
 
     return FortuneResponse(user_info=user_info, results=results)

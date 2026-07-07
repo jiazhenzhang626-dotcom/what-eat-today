@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Fortune - 占卜美食引擎</title>
     <style>
-        /* ==========================================
-           全局样式 & CSS 变量
-           ========================================== */
         :root {
             --bg-primary: #1a1a2e;
             --bg-secondary: #16213e;
@@ -16,21 +13,11 @@
             --text-secondary: #a0a0b0;
             --gold: #d4af37;
             --gold-dim: #a08020;
-            --radius: 12px;
+            --radius: 16px;
             --transition: 0.3s ease;
-            /* 五行颜色 */
-            --wuxing-mu: #4CAF50;
-            --wuxing-huo: #F44336;
-            --wuxing-tu: #FF9800;
-            --wuxing-jin: #B0BEC5;
-            --wuxing-shui: #42A5F5;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
@@ -38,21 +25,19 @@
             background: linear-gradient(135deg, var(--bg-primary) 0%, #0f3460 50%, var(--bg-primary) 100%);
             min-height: 100vh;
             color: var(--text-primary);
-            padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
         }
 
-        /* ==========================================
-           头部
-           ========================================== */
         .header {
             text-align: center;
-            margin-bottom: 2.5rem;
+            margin-bottom: 3rem;
         }
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 700;
             background: linear-gradient(135deg, var(--gold) 0%, #f0d060 50%, var(--gold-dim) 100%);
             -webkit-background-clip: text;
@@ -63,343 +48,91 @@
         }
         .header .subtitle {
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             letter-spacing: 0.1em;
         }
 
-        /* ==========================================
-           卡片容器（玻璃效果）
-           ========================================== */
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            padding: 2rem;
-            transition: transform var(--transition), box-shadow var(--transition);
+        .mode-cards {
+            display: flex;
+            gap: 2rem;
+            max-width: 800px;
             width: 100%;
-            max-width: 620px;
-        }
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
-        /* ==========================================
-           表单
-           ========================================== */
-        .form-group {
-            margin-bottom: 1.25rem;
+        .mode-card {
+            flex: 1;
+            min-width: 280px;
+            max-width: 380px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+            transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
-        .form-group label {
-            display: block;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 0.4rem;
-            letter-spacing: 0.05em;
-        }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none;
-            transition: border-color var(--transition);
-        }
-        .form-group input:focus,
-        .form-group select:focus {
+        .mode-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
             border-color: var(--gold);
         }
-        .form-row {
-            display: flex;
-            gap: 1rem;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
 
-        /* 占卜按钮 */
-        .btn-submit {
-            width: 100%;
-            padding: 0.85rem;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, var(--gold-dim) 0%, var(--gold) 100%);
-            color: #1a1a2e;
-            font-size: 1.15rem;
+        .mode-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.25rem;
+        }
+        .mode-card h2 {
+            font-size: 1.5rem;
             font-weight: 700;
-            cursor: pointer;
-            letter-spacing: 0.1em;
-            transition: opacity var(--transition), transform var(--transition);
-            margin-top: 0.5rem;
-        }
-        .btn-submit:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
-        }
-        .btn-submit:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* ==========================================
-           加载状态
-           ========================================== */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 2rem;
+            margin-bottom: 0.75rem;
             color: var(--gold);
-            font-size: 1.1rem;
-        }
-        .loading.active {
-            display: block;
-        }
-        .spinner {
-            display: inline-block;
-            width: 2rem;
-            height: 2rem;
-            border: 3px solid rgba(212, 175, 55, 0.2);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            vertical-align: middle;
-            margin-right: 0.5rem;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ==========================================
-           结果区域
-           ========================================== */
-        .results-area {
-            display: none;
-            width: 100%;
-            max-width: 620px;
-        }
-        .results-area.active {
-            display: block;
-        }
-
-        /* 用户信息卡片 */
-        .user-info-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 2rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            justify-content: center;
-        }
-        .user-info-item {
-            text-align: center;
-        }
-        .user-info-item .label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
             letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
         }
-        .user-info-item .value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--gold);
+        .mode-card .desc {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
         }
-
-        /* 菜品卡片 */
-        .recipe-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            transition: transform var(--transition), box-shadow var(--transition);
-        }
-        .recipe-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        .recipe-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .rank-badge {
-            background: var(--gold);
-            color: #1a1a2e;
-            width: 2rem;
-            height: 2rem;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-        .recipe-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            flex: 1;
-        }
-        .recipe-category {
+        .mode-card .features {
+            margin-top: 1.5rem;
             font-size: 0.85rem;
             color: var(--text-secondary);
-            background: rgba(255, 255, 255, 0.08);
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
-        }
-
-        /* 标签行 */
-        .tag-row {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
-            align-items: center;
+            flex-direction: column;
+            gap: 0.4rem;
         }
-        .flavor-tag {
+        .mode-card .features span {
+            opacity: 0.8;
+        }
+        .mode-badge {
+            display: inline-block;
+            margin-top: 1.25rem;
+            padding: 0.35rem 1rem;
+            border-radius: 20px;
             font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .badge-static {
             background: rgba(212, 175, 55, 0.15);
             color: var(--gold);
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
-        .wuxing-dot {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            font-size: 0.8rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
+        .badge-dynamic {
+            background: rgba(66, 165, 245, 0.15);
+            color: #64B5F6;
+            border: 1px solid rgba(66, 165, 245, 0.3);
         }
 
-        /* 得分行 */
-        .score-row {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        .score-row span {
-            color: var(--gold);
-            font-weight: 600;
-        }
-        .score-total {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--gold) !important;
-        }
-
-        /* 可折叠步骤 */
-        details.recipe-steps {
-            margin-bottom: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        details.recipe-steps summary {
-            padding: 0.6rem 1rem;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-secondary);
-            background: rgba(255, 255, 255, 0.04);
-            letter-spacing: 0.05em;
-            transition: color var(--transition);
-        }
-        details.recipe-steps summary:hover {
-            color: var(--gold);
-        }
-        details.recipe-steps ol {
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            margin: 0;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            line-height: 1.8;
-        }
-        details.recipe-steps ol li {
-            margin-bottom: 0.25rem;
-        }
-
-        /* 配料 */
-        .ingredients-line {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-            padding: 0.5rem 0.75rem;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 6px;
-            line-height: 1.6;
-        }
-
-        /* 占卜文案 */
-        .fortune-text {
-            font-style: italic;
-            color: #c0b0a0;
-            padding: 0.75rem 1rem;
-            border-left: 3px solid var(--gold-dim);
-            background: rgba(212, 175, 55, 0.06);
-            border-radius: 0 8px 8px 0;
-            line-height: 1.7;
-            font-size: 0.95rem;
-            white-space: pre-wrap;
-        }
-
-        /* 重新占卜按钮 */
-        .btn-restart {
-            display: block;
-            width: 100%;
-            max-width: 620px;
-            margin: 2rem auto;
-            padding: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            background: transparent;
-            color: var(--text-primary);
-            font-size: 1rem;
-            cursor: pointer;
-            letter-spacing: 0.05em;
-            transition: border-color var(--transition), color var(--transition);
-        }
-        .btn-restart:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-        }
-
-        /* ==========================================
-           错误提示
-           ========================================== */
-        .error-msg {
-            background: rgba(244, 67, 54, 0.1);
-            border: 1px solid rgba(244, 67, 54, 0.3);
-            color: #F44336;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            display: none;
-        }
-        .error-msg.active {
-            display: block;
-        }
-
-        /* ==========================================
-           页脚
-           ========================================== */
         .footer {
             margin-top: 3rem;
             text-align: center;
@@ -407,25 +140,13 @@
             font-size: 0.8rem;
             line-height: 1.8;
         }
-        .footer a {
-            color: var(--gold-dim);
-            text-decoration: none;
-        }
-        .footer a:hover {
-            text-decoration: underline;
+
+        @media (max-width: 640px) {
+            .header h1 { font-size: 2rem; }
+            .mode-cards { flex-direction: column; align-items: center; }
+            .mode-card { max-width: 100%; padding: 2rem 1.5rem; }
         }
 
-        /* ==========================================
-           响应式
-           ========================================== */
-        @media (max-width: 480px) {
-            .header h1 { font-size: 1.8rem; }
-            .form-row { flex-direction: column; gap: 0; }
-            .card { padding: 1.25rem; }
-            .user-info-card { gap: 1rem; }
-        }
-
-        /* 亮色主题适配 */
         @media (prefers-color-scheme: light) {
             :root {
                 --bg-primary: #f5f0eb;
@@ -434,345 +155,50 @@
                 --text-primary: #2a2a2a;
                 --text-secondary: #666;
             }
-            .card, .recipe-card, .user-info-card {
+            .mode-card {
                 border: 1px solid rgba(0, 0, 0, 0.08);
                 box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
-            }
-            .fortune-text {
-                background: rgba(212, 175, 55, 0.08);
-                color: #5a4a3a;
             }
         }
     </style>
 </head>
 <body>
-
-    <!-- ==========================================
-         头部
-         ========================================== -->
     <div class="header">
         <h1>占卜美食引擎</h1>
         <p class="subtitle">今天，宇宙想让你吃什么？</p>
     </div>
 
-    <!-- ==========================================
-         表单卡片
-         ========================================== -->
-    <div class="card" id="form-card">
-        <form id="fortune-form">
-            <div class="form-group">
-                <label for="birth-date">出生日期 *</label>
-                <input type="date" id="birth-date" name="birth-date" required>
+    <div class="mode-cards">
+        <!-- 静态推荐卡片 -->
+        <a href="/fortune?mode=static" class="mode-card">
+            <div class="mode-icon">🔮</div>
+            <h2>静态推荐</h2>
+            <p class="desc">基于你的星座口味偏好与八字五行喜用神，推荐最适合你的中国菜。</p>
+            <div class="features">
+                <span>⭐ 星座 · 口味共鸣</span>
+                <span>☯️ 八字 · 五行调补</span>
+                <span>📋 每次结果一致</span>
             </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="birth-time">出生时间（可选）</label>
-                    <input type="time" id="birth-time" name="birth-time">
-                </div>
-                <div class="form-group">
-                    <label for="gender">性别（可选）</label>
-                    <select id="gender" name="gender">
-                        <option value="">不限</option>
-                        <option value="男">男</option>
-                        <option value="女">女</option>
-                    </select>
-                </div>
+            <span class="mode-badge badge-static">星座 + 八字</span>
+        </a>
+
+        <!-- 动态推荐卡片 -->
+        <a href="/fortune?mode=dynamic" class="mode-card">
+            <div class="mode-icon">🌊</div>
+            <h2>动态推荐</h2>
+            <p class="desc">在星座与八字基础上，额外绑定今日流日天干，同一用户每天都可能获得不同推荐。</p>
+            <div class="features">
+                <span>⭐ 星座 · 口味共鸣</span>
+                <span>☯️ 八字 · 五行调补</span>
+                <span>🌊 流日 · 天干生克</span>
+                <span>📋 每日结果不同</span>
             </div>
-            <div class="form-group">
-                <label for="top-k">推荐几道菜</label>
-                <select id="top-k" name="top-k">
-                    <option value="1">1 道</option>
-                    <option value="2">2 道</option>
-                    <option value="3" selected>3 道</option>
-                    <option value="4">4 道</option>
-                    <option value="5">5 道</option>
-                    <option value="6">6 道</option>
-                    <option value="7">7 道</option>
-                </select>
-            </div>
-            <button type="submit" class="btn-submit" id="submit-btn">开始占卜</button>
-        </form>
+            <span class="mode-badge badge-dynamic">+ 流日天干</span>
+        </a>
     </div>
 
-    <!-- ==========================================
-         加载状态
-         ========================================== -->
-    <div class="loading" id="loading">
-        <span class="spinner"></span> 占卜中，宇宙正在为你匹配美食...
-    </div>
-
-    <!-- ==========================================
-         错误提示
-         ========================================== -->
-    <div class="card error-msg" id="error-msg"></div>
-
-    <!-- ==========================================
-         结果区域（初始隐藏）
-         ========================================== -->
-    <div class="results-area" id="results-area">
-        <div class="user-info-card" id="user-info-card"></div>
-        <div id="recipe-list"></div>
-        <button class="btn-restart" id="btn-restart">重新占卜</button>
-    </div>
-
-    <!-- ==========================================
-         页脚
-         ========================================== -->
     <div class="footer">
         <p>本工具仅供学习与娱乐，不构成任何饮食、医疗或决策建议。</p>
-        <p><a href="https://github.com" target="_blank">GitHub</a></p>
     </div>
-
-    <!-- ==========================================
-         交互脚本
-         ========================================== -->
-    <script>
-    (function () {
-        // ---------- DOM 引用 ----------
-        var formCard = document.getElementById('form-card');
-        var loadingEl = document.getElementById('loading');
-        var errorEl = document.getElementById('error-msg');
-        var resultsArea = document.getElementById('results-area');
-        var userInfoCard = document.getElementById('user-info-card');
-        var recipeList = document.getElementById('recipe-list');
-        var submitBtn = document.getElementById('submit-btn');
-        var form = document.getElementById('fortune-form');
-
-        // ---------- 五行颜色映射 ----------
-        var WUXING_COLORS = {
-            '木': { bg: 'rgba(76,175,80,0.15)', text: '#4CAF50', border: 'rgba(76,175,80,0.4)' },
-            '火': { bg: 'rgba(244,67,54,0.15)', text: '#F44336', border: 'rgba(244,67,54,0.4)' },
-            '土': { bg: 'rgba(255,152,0,0.15)', text: '#FF9800', border: 'rgba(255,152,0,0.4)' },
-            '金': { bg: 'rgba(176,190,197,0.15)', text: '#B0BEC5', border: 'rgba(176,190,197,0.4)' },
-            '水': { bg: 'rgba(66,165,245,0.15)', text: '#42A5F5', border: 'rgba(66,165,245,0.4)' }
-        };
-
-        // ---------- 工具函数 ----------
-        /** 创建带样式的五行标签 */
-        function createWuxingTag(element) {
-            var colors = WUXING_COLORS[element] || WUXING_COLORS['土'];
-            var span = document.createElement('span');
-            span.className = 'wuxing-dot';
-            span.textContent = element;
-            span.style.background = colors.bg;
-            span.style.color = colors.text;
-            span.style.border = '1px solid ' + colors.border;
-            return span;
-        }
-
-        /** 显示/隐藏元素 */
-        function show(el) { el.classList.add('active'); }
-        function hide(el) { el.classList.remove('active'); }
-
-        /** 重置到表单状态 */
-        function resetToForm() {
-            hide(resultsArea);
-            hide(errorEl);
-            show(formCard);
-        }
-
-        /** 显示错误 */
-        function showError(message) {
-            errorEl.textContent = message;
-            show(errorEl);
-            hide(loadingEl);
-        }
-
-        // ---------- 表单提交处理 ----------
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            var birthDate = document.getElementById('birth-date').value;
-            var birthTime = document.getElementById('birth-time').value;
-            var gender = document.getElementById('gender').value;
-            var topK = parseInt(document.getElementById('top-k').value) || 3;
-
-            if (!birthDate) {
-                showError('请输入出生日期');
-                return;
-            }
-
-            // 进入加载状态
-            hide(errorEl);
-            hide(formCard);
-            hide(resultsArea);
-            show(loadingEl);
-            submitBtn.disabled = true;
-
-            // 构建请求体
-            var body = { birth_date: birthDate, top_k: topK };
-            if (birthTime) body.birth_time = birthTime;
-            if (gender) body.gender = gender;
-
-            // 发起请求
-            fetch('/api/fortune', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            })
-            .then(function (res) {
-                if (!res.ok) {
-                    return res.json().then(function (err) {
-                        throw new Error(err.detail || '服务器返回错误');
-                    });
-                }
-                return res.json();
-            })
-            .then(function (data) {
-                renderResults(data);
-                hide(loadingEl);
-                submitBtn.disabled = false;
-            })
-            .catch(function (err) {
-                showError('占卜请求失败: ' + err.message);
-                show(formCard);
-                submitBtn.disabled = false;
-            });
-        });
-
-        // ---------- 渲染结果 ----------
-        function renderResults(data) {
-            var userInfo = data.user_info;
-            var results = data.results;
-
-            // 构建用户信息卡片
-            userInfoCard.innerHTML = '';
-            var infoItems = [
-                { label: '星座', value: userInfo.constellation },
-                { label: '日主', value: userInfo.day_master },
-                { label: '五行建议', value: userInfo.wuxing_tip || '-' }
-            ];
-            infoItems.forEach(function (item) {
-                var div = document.createElement('div');
-                div.className = 'user-info-item';
-                div.innerHTML =
-                    '<div class="label">' + item.label + '</div>' +
-                    '<div class="value">' + item.value + '</div>';
-                userInfoCard.appendChild(div);
-            });
-
-            // 构建菜品卡片列表
-            recipeList.innerHTML = '';
-            results.forEach(function (dish) {
-                recipeList.appendChild(buildRecipeCard(dish));
-            });
-
-            // 显示结果区
-            show(resultsArea);
-        }
-
-        /** 构建单道菜的 DOM 卡片 */
-        function buildRecipeCard(dish) {
-            var card = document.createElement('div');
-            card.className = 'recipe-card';
-
-            // --- 头部：排名 + 菜名 + 菜系 ---
-            var header = document.createElement('div');
-            header.className = 'recipe-header';
-
-            var rankBadge = document.createElement('span');
-            rankBadge.className = 'rank-badge';
-            rankBadge.textContent = dish.rank;
-
-            var nameEl = document.createElement('span');
-            nameEl.className = 'recipe-name';
-            nameEl.textContent = dish.name;
-
-            var categoryEl = document.createElement('span');
-            categoryEl.className = 'recipe-category';
-            categoryEl.textContent = dish.category;
-
-            header.appendChild(rankBadge);
-            header.appendChild(nameEl);
-            header.appendChild(categoryEl);
-            card.appendChild(header);
-
-            // --- 标签行：口味 + 五行 ---
-            var tagRow = document.createElement('div');
-            tagRow.className = 'tag-row';
-
-            // 口味标签
-            (dish.flavors || []).forEach(function (f) {
-                var tag = document.createElement('span');
-                tag.className = 'flavor-tag';
-                tag.textContent = f;
-                tagRow.appendChild(tag);
-            });
-
-            // 分隔点
-            var sep = document.createElement('span');
-            sep.style.color = 'rgba(255,255,255,0.2)';
-            sep.style.margin = '0 0.25rem';
-            sep.textContent = '|';
-            tagRow.appendChild(sep);
-
-            // 五行标签
-            (dish.wuxing || []).forEach(function (wx) {
-                tagRow.appendChild(createWuxingTag(wx));
-            });
-
-            card.appendChild(tagRow);
-
-            // --- 得分行 ---
-            var scoreRow = document.createElement('div');
-            scoreRow.className = 'score-row';
-            scoreRow.innerHTML =
-                '星座: <span>' + dish.scores.constellation + '</span> 分' +
-                '  |  八字: <span>' + dish.scores.bazi + '</span> 分' +
-                '  |  综合: <span class="score-total">' + dish.scores.total + '</span> 分';
-            card.appendChild(scoreRow);
-
-            // --- 配料 ---
-            if (dish.ingredients && dish.ingredients.length) {
-                var ingEl = document.createElement('div');
-                ingEl.className = 'ingredients-line';
-                ingEl.textContent = dish.ingredients.join(', ');
-                card.appendChild(ingEl);
-            }
-
-            // --- 可折叠步骤 ---
-            if (dish.steps && dish.steps.length) {
-                var details = document.createElement('details');
-                details.className = 'recipe-steps';
-
-                var summary = document.createElement('summary');
-                summary.textContent = '查看做法（共 ' + dish.steps.length + ' 步）';
-                details.appendChild(summary);
-
-                var ol = document.createElement('ol');
-                dish.steps.forEach(function (step) {
-                    var li = document.createElement('li');
-                    li.textContent = step;
-                    ol.appendChild(li);
-                });
-                details.appendChild(ol);
-                card.appendChild(details);
-            }
-
-            // --- 占卜文案 ---
-            if (dish.fortune_text) {
-                var fortuneEl = document.createElement('div');
-                fortuneEl.className = 'fortune-text';
-                fortuneEl.textContent = dish.fortune_text;
-                card.appendChild(fortuneEl);
-            }
-
-            return card;
-        }
-
-        // ---------- 重新占卜 ----------
-        document.getElementById('btn-restart').addEventListener('click', function () {
-            resetToForm();
-            form.reset();
-        });
-
-        // ---------- 初始化：设置 date 输入框默认值 ----------
-        var dateInput = document.getElementById('birth-date');
-        if (!dateInput.value) {
-            // 友好默认值：1995-01-01
-            dateInput.value = '';
-        }
-    })();
-    </script>
 </body>
 </html>
